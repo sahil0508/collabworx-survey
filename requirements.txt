@@ -1,0 +1,10 @@
+streamlit
+pandas
+altair
+plotly
+gspread
+oauth2client
+python-dotenv
+openai>=1.0.0
+google-api-python-client
+gspread
