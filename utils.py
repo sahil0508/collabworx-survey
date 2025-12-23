@@ -1,18 +1,24 @@
 import os
 import json
+import base64
 import pandas as pd
 import gspread
 from datetime import datetime
-from dotenv import load_dotenv
 from oauth2client.service_account import ServiceAccountCredentials
 
-load_dotenv()
 
 # -------------------------------------------------------
-# Load Google credentials
+# Load Google credentials (BASE64 – STREAMLIT SAFE)
 # -------------------------------------------------------
 def get_creds():
-    creds_dict = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
+    b64 = os.getenv("GOOGLE_CREDENTIALS_B64")
+    if not b64:
+        raise RuntimeError("GOOGLE_CREDENTIALS_B64 is not set")
+
+    creds_dict = json.loads(
+        base64.b64decode(b64).decode("utf-8")
+    )
+
     scope = ["https://www.googleapis.com/auth/spreadsheets"]
     return ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 
@@ -25,6 +31,9 @@ def get_client_worksheet(client_name: str):
     gc = gspread.authorize(creds)
 
     master_sheet_id = os.getenv("MASTER_SHEET_ID")
+    if not master_sheet_id:
+        raise RuntimeError("MASTER_SHEET_ID is not set")
+
     sh = gc.open_by_key(master_sheet_id)
 
     existing_tabs = [ws.title for ws in sh.worksheets()]
@@ -41,11 +50,6 @@ def get_client_worksheet(client_name: str):
 # Append survey responses (LONG FORMAT)
 # -------------------------------------------------------
 def append_response_to_sheet(responses: dict, client_name: str, questions: list):
-    """
-    responses: {question_index: score}
-    client_name: 'HCL'
-    questions: loaded questions.json
-    """
 
     ws = get_client_worksheet(client_name)
 
@@ -68,27 +72,25 @@ def append_response_to_sheet(responses: dict, client_name: str, questions: list)
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    rows_to_append = []
+    rows = []
 
     for q_index, score in responses.items():
         q = questions[q_index]
-
-        rows_to_append.append([
+        rows.append([
             sno,
-            client_name,          # FULL client name
+            client_name,
             q["text"],
             q["category"],
             score,
             timestamp
         ])
 
-    ws.append_rows(rows_to_append, value_input_option="RAW")
+    ws.append_rows(rows, value_input_option="RAW")
 
 
 # -------------------------------------------------------
-# Load client data (for dashboard)
+# Load client data (for dashboard later)
 # -------------------------------------------------------
 def load_client_data(client_name: str):
     ws = get_client_worksheet(client_name)
-    data = ws.get_all_records()
-    return pd.DataFrame(data)
+    return pd.DataFrame(ws.get_all_records())
