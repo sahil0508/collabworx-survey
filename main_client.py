@@ -6,6 +6,12 @@ import json
 with open("questions.json", "r", encoding="utf-8") as f:
     QUESTIONS = json.load(f)
 
+st.set_page_config(
+    page_title="Collabworx Diagnostic – Survey",
+    page_icon="✨",
+    layout="wide"
+)
+
 # -----------------------------
 # Read query params safely
 # -----------------------------
@@ -29,3 +35,4 @@ if required_key:
 
     if provided_key != required_key:
         st.error("Invalid or missing access key")
+
