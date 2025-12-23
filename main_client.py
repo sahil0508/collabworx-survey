@@ -12,6 +12,17 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+st.markdown(
+    """
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # -------------------------------------------------
 # Load questions (non-Streamlit operation)
 # -------------------------------------------------
@@ -47,3 +58,4 @@ if required_key:
 # Render survey
 # -------------------------------------------------
 survey_page(client_name)
+
